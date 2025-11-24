@@ -70,7 +70,7 @@ ansible-playbook -i inventory.yml site.yml
 - Retrieves the join token from the control plane.
 - Runs `kubeadm join` to connect the worker to the cluster.
 
-## 🧪 Verification
+## Verification
 
 Once the playbook finishes, SSH into your control plane node and run:
 
