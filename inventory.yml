@@ -1,0 +1,16 @@
+all:
+  vars:
+    ansible_ssh_private_key_file: ~/.ssh/vm-srvs_id.pub
+    ansible_user: mhand
+    ansible_python_interpreter: /usr/bin/python3 # skips ansible annoying warnings/errors
+  children:
+    control_plane:
+      hosts:
+        control-plane-01:
+          ansible_host: srv-control-plane-01
+    workers:
+      hosts:
+        worker-01:
+          ansible_host: srv-worker-01
+        worker-02:
+          ansible_host: srv-worker-02
