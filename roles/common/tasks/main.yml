@@ -44,6 +44,11 @@
     state: present
     update_cache: yes
 
+- name: Ensure /etc/containerd exists
+  file:
+    path: /etc/containerd
+    state: directory
+
 - name: Generate default containerd config
   shell: containerd config default > /etc/containerd/config.toml
   args:
@@ -55,6 +60,12 @@
     regexp: "SystemdCgroup = false"
     replace: "SystemdCgroup = true"
   notify: Restart Containerd
+
+- name: Ensure Containerd is started and enabled
+  service:
+    name: containerd
+    state: started
+    enabled: yes
 
 - name: Add Kubernetes Apt Key
   get_url:

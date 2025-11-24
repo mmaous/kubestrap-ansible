@@ -4,3 +4,17 @@
   become: yes
   roles:
     - common
+
+- name: Configure Control Plane
+  hosts: control_plane
+  become: yes
+  roles:
+    - control-plane
+  tags: configure_control_plane
+
+- name: Configure Worker Nodes
+  hosts: workers
+  become: yes
+  roles:
+    - worker
+  tags: join_workers

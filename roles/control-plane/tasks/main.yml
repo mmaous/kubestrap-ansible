@@ -1,0 +1,40 @@
+---
+- name: Initialize Kubernetes Cluster
+  command: >
+    kubeadm init
+    --pod-network-cidr=10.244.0.0/16
+    --apiserver-advertise-address={{ ansible_host }}
+  register: kubeadm_init
+  args:
+    creates: /etc/kubernetes/admin.conf
+
+- name: Create .kube directory for {{ ansible_user }} user
+  file:
+    path: "/home/{{ ansible_user }}/.kube"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0755
+
+- name: Copy admin.conf to user kube config
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: "/home/{{ ansible_user }}/.kube/config"
+    remote_src: yes
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+
+- name: Install Flannel CNI (Pod Network)
+  become: no
+  command: kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+  environment:
+    KUBECONFIG: /home/{{ ansible_user }}/.kube/config
+
+- name: Generate Join Command
+  command: kubeadm token create --print-join-command
+  register: join_command
+
+- name: Store Join Command globally
+  add_host:
+    name: "K8S_TOKEN_HOLDER"
+    join_cmd: "{{ join_command.stdout }}"

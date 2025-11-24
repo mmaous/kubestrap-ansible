@@ -7,10 +7,10 @@ all:
     control_plane:
       hosts:
         control-plane-01:
-          ansible_host: srv-control-plane-01
+          ansible_host: 172.16.167.10
     workers:
       hosts:
         worker-01:
-          ansible_host: srv-worker-01
+          ansible_host: 172.16.167.101
         worker-02:
-          ansible_host: srv-worker-02
+          ansible_host: 172.16.167.102
