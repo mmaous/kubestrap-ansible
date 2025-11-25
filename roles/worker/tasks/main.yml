@@ -1,5 +1,14 @@
 ---
+- name: Retrieve Join Command from Control Plane
+  command: kubeadm token create --print-join-command
+  register: join_command_raw
+  delegate_to: "{{ groups['control_plane'][0] }}"
+  run_once: true
+
+- debug:
+    msg: "{{ join_command_raw.stdout }}"
+
 - name: Join Cluster
-  command: "{{ hostvars['K8S_TOKEN_HOLDER']['join_cmd'] }}"
+  command: "{{ join_command_raw.stdout }}"
   args:
     creates: /etc/kubernetes/kubelet.conf

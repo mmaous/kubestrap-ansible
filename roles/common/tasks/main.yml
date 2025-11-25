@@ -67,6 +67,12 @@
     state: started
     enabled: yes
 
+- name: Ensure /etc/apt/keyrings exists
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
 - name: Add Kubernetes Apt Key
   get_url:
     url: https://pkgs.k8s.io/core:/stable:/v1.34/deb/Release.key
