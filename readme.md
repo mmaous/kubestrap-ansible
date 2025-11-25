@@ -2,18 +2,20 @@
 
 ![Ansible](https://img.shields.io/badge/ansible-%231A1918.svg?style=flat&logo=ansible&logoColor=white) ![Kubernetes](https://img.shields.io/badge/kubernetes-%23326ce5.svg?style=flat&logo=kubernetes&logoColor=white)
 
-This repository contains Ansible playbooks and roles to automate the provisioning and management of a local Kubernetes cluster using `kubeadm`. It is designed to bootstrap a cluster from scratch on bare metal servers or local virtual machines (like Vagrant, KVM, or VMWare).
+This repository contains Ansible playbooks and roles to automate the provisioning and management of a local Kubernetes cluster using `kubeadm`. It is designed to bootstrap a cluster from scratch on bare metal servers or local virtual machines.
 
 ## Project Structure
 
 ```text
 .
 ├── inventory.yml       # Defines your control plane and worker nodes (IPs/Hostnames)
+├── requirements.yml    # Ansible Galaxy collection dependencies
 ├── roles
-│   ├── common          # Dependencies (Docker/Containerd, swap settings, kernel modules)
-│   ├── control-plane   # Initializes the cluster (kubeadm init) and networking (CNI)
+│   ├── common          # Dependencies (Containerd, swap settings, kernel modules)
+│   ├── control-plane   # Initializes the cluster (kubeadm init) and networking (Flannel)
 │   └── worker          # Joins nodes to the cluster (kubeadm join)
 └── site.yml            # Main playbook entry point
+
 ```
 
 ## Prerequisites
@@ -21,7 +23,7 @@ This repository contains Ansible playbooks and roles to automate the provisionin
 Before running the playbooks, ensure the following:
 
 1.  **Ansible Installed:** You need Ansible installed on your control machine.
-2.  **Target Machines:** You should have at least 2 Linux VMs (Ubuntu/CentOS/Debian) ready.
+2.  **Target Machines:** You should have at least 2 Linux VMs (Ubuntu/Debian) ready.
 3.  **SSH Access:** Passwordless SSH access (keys) configured from your control machine to the target nodes.
 4.  **Sudo Privileges:** The user connecting via SSH must have passwordless sudo privileges.
 
@@ -29,7 +31,23 @@ Before running the playbooks, ensure the following:
 
 ### 1. Configure Inventory
 
-Edit the `inventory.yml` file to match your local network setup.
+Edit the `inventory.yml file to match your local network setup.
+
+Crucial: You must update the ansible_user and ansible_ssh_private_key_file variables to match your environment:
+
+```yaml
+vars:
+  ansible_ssh_private_key_file: ~/.ssh/your_key.pub
+  ansible_user: your_username
+```
+
+### 2. Install Ansible Dependencies
+
+Install the required Ansible collections (Posix and Community General) defined in `requirements.yml`:
+
+```bash
+ansible-galaxy install -r requirements.yml
+```
 
 ### 2. Connectivity Check
 
