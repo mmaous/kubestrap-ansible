@@ -1,0 +1,16 @@
+---
+- name: Install Rancher Local Path Provisioner
+  command: kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+
+- name: Patch StorageClass to be Default
+  command: >
+    kubectl patch storageclass local-path
+    -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+
+- name: Confirm Storage Role is Running
+  debug:
+    msg: "The storage role is successfully loaded on {{ inventory_hostname }}"

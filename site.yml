@@ -1,20 +1,29 @@
 ---
 - name: Configure Common Prereqs
   hosts: all
-  become: yes
+  become: true
   roles:
     - common
 
 - name: Configure Control Plane
   hosts: control_plane
-  become: yes
+  become: true
   roles:
     - control-plane
   tags: configure_control_plane
 
 - name: Configure Worker Nodes
   hosts: workers
-  become: yes
+  become: true
   roles:
     - worker
   tags: join_workers
+
+- name: Configure Storage
+  hosts: control_plane
+  run_once: true # instead of hosts:control_plane[0], runs on first contacted cp node
+  become: true
+  tags: storage
+  tasks:
+    - name: Include storage tasks directly
+      include_tasks: addons/storage/main.yml
