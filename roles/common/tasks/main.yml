@@ -43,18 +43,28 @@
       - containerd
     state: present
     update_cache: yes
-
 - name: Ensure /etc/containerd exists
   file:
     path: /etc/containerd
     state: directory
 
-- name: Generate default containerd config
-  shell: containerd config default > /etc/containerd/config.toml
-  args:
-    creates: /etc/containerd/config.toml
+# 1. JUDGE: Check the file for CORRECTNESS, not just existence.
+- name: Check if containerd config is valid (contains SystemdCgroup)
+  ansible.builtin.command: grep "SystemdCgroup" /etc/containerd/config.toml
+  register: containerd_config_check
+  check_mode: no
+  ignore_errors: yes
+  changed_when: false
 
+# 2. ACT: If the check failed (stub or missing), generate the full config.
+- name: Generate default containerd config (if stub or missing)
+  ansible.builtin.shell: containerd config default > /etc/containerd/config.toml
+  when: containerd_config_check.rc != 0
+  notify: Restart Containerd
+
+# 3. CONFIGURE: Now we know the file is the full version, so we can edit it.
 - name: Set SystemdCgroup = true (critical for v1.32+)
+  tags: containerd
   ansible.builtin.replace:
     path: /etc/containerd/config.toml
     regexp: "SystemdCgroup = false"

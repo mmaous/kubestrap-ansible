@@ -19,11 +19,11 @@
     - worker
   tags: join_workers
 
-- name: Configure Storage
-  hosts: control_plane
-  run_once: true # instead of hosts:control_plane[0], runs on first contacted cp node
-  become: true
-  tags: storage
-  tasks:
-    - name: Include storage tasks directly
-      include_tasks: addons/storage/main.yml
+#- name: Configure Storage
+#  hosts: control_plane
+#  run_once: true # instead of hosts:control_plane[0], runs on first contacted cp node
+#  become: true
+#  tags: storage
+#  tasks:
+#    - name: Include storage tasks directly
+#      include_tasks: addons/storage/main.yml
