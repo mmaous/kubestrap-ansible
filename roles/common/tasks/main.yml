@@ -13,6 +13,14 @@
     - swap
     - none
 
+- name: Create /etc/modules-load.d/k8s.conf for persistence
+  copy:
+    dest: /etc/modules-load.d/k8s.conf
+    content: |
+      overlay
+      br_netfilter
+    mode: "0644"
+
 - name: Load Kernel Modules (overlay, br_netfilter)
   community.general.modprobe:
     name: "{{ item }}"
