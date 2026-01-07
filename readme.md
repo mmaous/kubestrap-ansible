@@ -12,7 +12,7 @@ This repository contains Ansible playbooks and roles to automate the provisionin
 ├── requirements.yml    # Ansible Galaxy collection dependencies
 ├── roles
 │   ├── common          # Dependencies (Containerd, swap settings, kernel modules)
-│   ├── control-plane   # Initializes the cluster (kubeadm init) and networking (Flannel)
+│   ├── control-plane   # Initializes the cluster (kubeadm init) and networking (Calico)
 │   └── worker          # Joins nodes to the cluster (kubeadm join)
 └── site.yml            # Main playbook entry point
 
@@ -80,7 +80,7 @@ ansible-playbook -i inventory.yml site.yml
 
 - Runs `kubeadm init` on the primary node.
 - Sets up the `.kube` config directory for the user.
-- Installs the Pod Network Addon (e.g., Calico or Flannel).
+- Installs the Pod Network Addon (e.g., Calico).
 - Generates the join command for workers.
 
 ### `roles/worker`
