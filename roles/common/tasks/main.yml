@@ -166,3 +166,9 @@
     - kubelet
     - kubeadm
     - kubectl
+
+- name: Install Kubeadm dependencies
+  apt:
+    name: conntrack
+    state: present
+    update_cache: yes
