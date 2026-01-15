@@ -3,4 +3,7 @@
   service:
     name: containerd
     state: restarted
-    daemon_reload: yes
+
+- name: Update Apt Cache
+  apt:
+    update_cache: yes
