@@ -1,22 +1,24 @@
 ---
 - name: Check if node is already joined
-  stat:
+  ansible.builtin.stat:
     path: /etc/kubernetes/kubelet.conf
-  register: kube_config
+  register: worker_kube_config
 
 - name: Retrieve Join Command from Control Plane
-  command: kubeadm token create --print-join-command
-  register: join_command_raw
+  ansible.builtin.command: kubeadm token create --print-join-command
+  register: worker_join_command_raw
   delegate_to: "{{ groups['control_plane'][0] }}"
   run_once: true
-  when: kube_config.stat.exists == false
+  changed_when: false
+  when: not worker_kube_config.stat.exists
 
-- debug:
-    msg: "{{ join_command_raw.stdout }}"
-  when: kube_config.stat.exists == false
+- name: Debug Join Command
+  ansible.builtin.debug:
+    msg: "{{ worker_join_command_raw.stdout }}"
+  when: not worker_kube_config.stat.exists
 
 - name: Join Cluster
-  command: "{{ join_command_raw.stdout }}"
+  ansible.builtin.command: "{{ worker_join_command_raw.stdout }}"
   args:
     creates: /etc/kubernetes/kubelet.conf
-  when: kube_config.stat.exists == false
+  when: not worker_kube_config.stat.exists

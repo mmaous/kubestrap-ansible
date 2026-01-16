@@ -1,10 +1,10 @@
 ---
 - name: Pre pull Kubernetes CP images
-  command: kubeadm config images pull
+  ansible.builtin.command: kubeadm config images pull
   changed_when: false
 
 - name: Initialize Kubernetes Cluster
-  command: >
+  ansible.builtin.command: >
     kubeadm init
     --pod-network-cidr=192.168.0.0/16
     --apiserver-advertise-address={{ ansible_host }}
@@ -13,20 +13,21 @@
     creates: /etc/kubernetes/admin.conf
 
 - name: Create .kube directory for {{ ansible_user }}
-  file:
+  ansible.builtin.file:
     path: "/home/{{ ansible_user }}/.kube"
     state: directory
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
-    mode: 0755
+    mode: "0755"
 
 - name: Copy admin.conf to user kube config
-  copy:
+  ansible.builtin.copy:
     src: /etc/kubernetes/admin.conf
     dest: "/home/{{ ansible_user }}/.kube/config"
-    remote_src: yes
+    remote_src: true
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
+    mode: "0600" # Important for security!
 
 - name: Apply Calico manifest from URL
   kubernetes.core.k8s:
