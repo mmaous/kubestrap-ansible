@@ -14,3 +14,6 @@ ping:
 
 dry-run:
 	ansible-playbook -i $(INV) $(PLAYBOOK) $(OPTS) $(if $(TAGS),--tags $(TAGS)) --check --diff
+
+install:
+	ansible-galaxy install -r requirements.yml

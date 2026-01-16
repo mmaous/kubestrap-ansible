@@ -28,8 +28,8 @@
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
 
-- name: Install Calico
-  become: false
-  command: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.31.3/manifests/calico.yaml
-  environment:
-    KUBECONFIG: /home/{{ ansible_user }}/.kube/config
+- name: Apply Calico manifest from URL
+  kubernetes.core.k8s:
+    state: present
+    src: "https://raw.githubusercontent.com/projectcalico/calico/{{ calico_version }}/manifests/calico.yaml"
+    kubeconfig: "/home/{{ ansible_user }}/.kube/config"
