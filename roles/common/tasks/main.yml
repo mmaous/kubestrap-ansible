@@ -50,6 +50,7 @@
 - name: Install Dependencies for Docker Repo
   ansible.builtin.apt:
     name:
+      - python3-kubernetes
       - ca-certificates
       - curl
       - gnupg
