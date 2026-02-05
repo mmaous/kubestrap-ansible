@@ -9,7 +9,7 @@ all:
     control_plane:
       hosts:
         control-plane-01:
-          ansible_host: 172.16.167.10
+          ansible_host: 172.16.167.11
     workers:
       hosts:
         worker-01:
