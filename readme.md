@@ -72,7 +72,7 @@ Edit `inventory.yml` to reflect your target infrastructure and preferences:
 all:
   vars:
     k8s_version: 1.31
-    calico_version: v3.26.1
+    cilium_version: 1.20.0
     ansible_user: ubuntu
     ansible_ssh_private_key_file: ~/.ssh/your_key.pem
     ansible_python_interpreter: /usr/bin/python3
@@ -109,7 +109,8 @@ make dry-run
 
 ### 5. Deploy the Cluster
 
-Run the playbook to provision containerd, `kubeadm`, `kubelet`, initialize the control plane with Calico CNI, and join worker nodes:
+Run the playbook to provision containerd, `kubeadm`, `kubelet`, initialize the control plane with Cilium CNI, and join worker nodes:
+
 
 ```bash
 make deploy
@@ -146,8 +147,9 @@ You can selectively run parts of the playbook using tags:
 ### `roles/control-plane`
 - Runs `kubeadm init` on the control plane node.
 - Sets up `.kube/config` for standard user access.
-- Deploys Calico Pod Network Addon.
+- Deploys Cilium Pod Network Addon.
 - Generates join token and certificate hash for worker nodes.
+
 
 ### `roles/worker`
 - Fetches join credentials from the control plane node.

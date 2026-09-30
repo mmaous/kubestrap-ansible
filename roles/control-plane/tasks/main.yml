@@ -29,11 +29,11 @@
     group: "{{ ansible_user }}"
     mode: "0600" # Important for security!
 
-# Changed from kubernetes.core.k8s to raw kubectl apply to avoid python dependency errors
-- name: Apply Calico manifest from URL
+# Apply Cilium CNI manifest
+- name: Apply Cilium manifest from URL
   ansible.builtin.command: >
-    kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/{{ calico_version }}/manifests/calico.yaml
+    kubectl apply -f https://raw.githubusercontent.com/cilium/cilium/v{{ cilium_version }}/install/kubernetes/quick-install.yaml
   environment:
     KUBECONFIG: "/home/{{ ansible_user }}/.kube/config"
-  register: calico_apply
-  changed_when: "'created' in calico_apply.stdout or 'configured' in calico_apply.stdout"
+  register: cilium_apply
+  changed_when: "'created' in cilium_apply.stdout or 'configured' in cilium_apply.stdout"

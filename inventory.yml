@@ -4,7 +4,7 @@ all:
     ansible_ssh_private_key_file: ~/.ssh/vm-srvs_id
     ansible_user: mhand
     ansible_python_interpreter: /usr/bin/python3 # skips ansible annoying warnings/errors
-    calico_version: v3.26.1
+    cilium_version: 1.20.0
     ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
   children:
     control_plane:
