@@ -7,7 +7,7 @@
   ansible.builtin.command: >
     kubeadm init
     --pod-network-cidr=192.168.0.0/16
-    --apiserver-advertise-address={{ ansible_host }}
+    --apiserver-advertise-address={{ ansible_default_ipv4.address }}
   register: kubeadm_init
   args:
     creates: /etc/kubernetes/admin.conf
@@ -29,8 +29,11 @@
     group: "{{ ansible_user }}"
     mode: "0600" # Important for security!
 
+# Changed from kubernetes.core.k8s to raw kubectl apply to avoid python dependency errors
 - name: Apply Calico manifest from URL
-  kubernetes.core.k8s:
-    state: present
-    src: "https://raw.githubusercontent.com/projectcalico/calico/{{ calico_version }}/manifests/calico.yaml"
-    kubeconfig: "/home/{{ ansible_user }}/.kube/config"
+  ansible.builtin.command: >
+    kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/{{ calico_version }}/manifests/calico.yaml
+  environment:
+    KUBECONFIG: "/home/{{ ansible_user }}/.kube/config"
+  register: calico_apply
+  changed_when: "'created' in calico_apply.stdout or 'configured' in calico_apply.stdout"

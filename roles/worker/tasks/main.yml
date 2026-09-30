@@ -18,7 +18,8 @@
   when: not worker_kube_config.stat.exists
 
 - name: Join Cluster
-  ansible.builtin.command: "{{ worker_join_command_raw.stdout }}"
+  # Added --ignore-preflight-errors=Mem for t3.micro workers
+  ansible.builtin.command: "{{ worker_join_command_raw.stdout }} --ignore-preflight-errors=Mem"
   args:
     creates: /etc/kubernetes/kubelet.conf
   when: not worker_kube_config.stat.exists
