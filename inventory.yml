@@ -1,10 +1,11 @@
 all:
   vars:
-    k8s_version: 1.31
-    ansible_ssh_private_key_file: ~/.ssh/vm-srvs_id.pub
+    k8s_version: 1.35
+    ansible_ssh_private_key_file: ~/.ssh/vm-srvs_id
     ansible_user: mhand
     ansible_python_interpreter: /usr/bin/python3 # skips ansible annoying warnings/errors
     calico_version: v3.26.1
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
   children:
     control_plane:
       hosts:
@@ -16,3 +17,5 @@ all:
           ansible_host: 172.16.167.101
         worker-02:
           ansible_host: 172.16.167.102
+        worker-03:
+          ansible_host: 172.16.167.103
