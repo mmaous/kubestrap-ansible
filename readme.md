@@ -8,92 +8,159 @@ This repository contains Ansible playbooks and roles to automate the provisionin
 
 ```text
 .
-├── inventory.yml       # Defines your control plane and worker nodes (IPs/Hostnames)
+├── Makefile            # Convenient commands for setup, deployment, pinging, and linting
+├── inventory.yml       # Defines control plane and worker nodes, SSH vars, and k8s configuration
 ├── requirements.yml    # Ansible Galaxy collection dependencies
-├── roles
-│   ├── common          # Dependencies (Containerd, swap settings, kernel modules)
-│   ├── control-plane   # Initializes the cluster (kubeadm init) and networking (Calico)
-│   └── worker          # Joins nodes to the cluster (kubeadm join)
-└── site.yml            # Main playbook entry point
-
+├── site.yml            # Main playbook entry point
+├── addons/             # Additional Kubernetes cluster manifests and storage configurations
+└── roles/
+    ├── common          # System setup (containerd, swap disable, kernel modules, kubeadm binaries)
+    ├── control-plane   # Cluster initialization (kubeadm init), CNI (Calico), join token generation
+    └── worker          # Joins worker nodes to the cluster (kubeadm join)
 ```
 
 ## Prerequisites
 
 Before running the playbooks, ensure the following:
 
-1.  **Ansible Installed:** You need Ansible installed on your control machine.
-2.  **Target Machines:** You should have at least 2 Linux VMs (Ubuntu/Debian) ready.
-3.  **SSH Access:** Passwordless SSH access (keys) configured from your control machine to the target nodes.
-4.  **Sudo Privileges:** The user connecting via SSH must have passwordless sudo privileges.
+1. **Ansible Installed:** You need Ansible installed on your control machine (`ansible` and `ansible-playbook`).
+2. **Target Machines:** At least 1 control plane node and worker nodes (Ubuntu/Debian) ready.
+3. **SSH Access:** Passwordless SSH access (keys) configured from your control machine to the target nodes.
+4. **Sudo Privileges:** The user connecting via SSH must have passwordless sudo privileges.
 
-## Usage
+---
 
-### 1. Configure Inventory
+## Quickstart & Helper Commands (`Makefile`)
 
-Edit the `inventory.yml file to match your local network setup.
+To streamline your workflow and provide a smoother starter experience, common tasks are wrapped in the project `Makefile`.
 
-Crucial: You must update the ansible_user and ansible_ssh_private_key_file variables to match your environment:
+Run `make help` or `make` at any time to see available commands:
+
+```bash
+make help
+```
+
+### Key Make Commands:
+
+| Command | Description | Example Usage |
+| :--- | :--- | :--- |
+| `make install` | Installs Galaxy collections defined in `requirements.yml` | `make install` |
+| `make ping` | Checks SSH connectivity to all inventory nodes | `make ping` |
+| `make lint` | Performs syntax checks and runs `ansible-lint` | `make lint` |
+| `make dry-run` | Runs playbook in check mode with `--diff` | `make dry-run` |
+| `make deploy` | Runs the full Ansible playbook (`site.yml`) | `make deploy` |
+| `make deploy TAGS=...` | Runs playbook filtered by tags | `make deploy TAGS=configure_control_plane` |
+
+---
+
+## Usage Guide
+
+### 1. Install Ansible Dependencies
+
+Install the required Ansible dependencies (Posix and Community General collections):
+
+```bash
+make install
+# Or manually: ansible-galaxy install -r requirements.yml
+```
+
+### 2. Configure Inventory
+
+Edit `inventory.yml` to reflect your target infrastructure and preferences:
 
 ```yaml
-vars:
-  ansible_ssh_private_key_file: ~/.ssh/your_key.pub
-  ansible_user: your_username
+all:
+  vars:
+    k8s_version: 1.31
+    calico_version: v3.26.1
+    ansible_user: ubuntu
+    ansible_ssh_private_key_file: ~/.ssh/your_key.pem
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+  children:
+    control_plane:
+      hosts:
+        control-plane-01:
+          ansible_host: 172.16.167.11
+    workers:
+      hosts:
+        worker-01:
+          ansible_host: 172.16.167.101
+        worker-02:
+          ansible_host: 172.16.167.102
 ```
 
-### 2. Install Ansible Dependencies
+### 3. Verify Connectivity
 
-Install the required Ansible collections (Posix and Community General) defined in `requirements.yml`:
+Test connection to all control plane and worker nodes:
 
 ```bash
-ansible-galaxy install -r requirements.yml
+make ping
+# Or manually: ansible -i inventory.yml all -m ping
 ```
 
-### 2. Connectivity Check
+### 4. Run Dry Run (Optional)
 
-Verify that Ansible can talk to your nodes:
+Preview changes without modifying host configurations:
 
 ```bash
-ansible all -i inventory.yml -m ping
+make dry-run
 ```
 
-### 3. Run the Playbook
+### 5. Deploy the Cluster
 
-Execute the main playbook to set up the cluster:
+Run the playbook to provision containerd, `kubeadm`, `kubelet`, initialize the control plane with Calico CNI, and join worker nodes:
 
 ```bash
-ansible-playbook -i inventory.yml site.yml
+make deploy
+# Or manually: ansible-playbook -i inventory.yml site.yml
 ```
 
-> **Note:** This process may take several minutes depending on your internet connection speed, as it downloads required binaries and container images.
+> **Note:** Deployment may take several minutes while nodes download container images and Kubernetes binaries.
+
+#### Selective Runs with Tags
+
+You can selectively run parts of the playbook using tags:
+
+- **Prerequisites only:** `make deploy TAGS=prereqs`
+- **Control plane only:** `make deploy TAGS=configure_control_plane`
+- **Worker join only:** `make deploy TAGS=join_workers`
+- **Adding a new worker node (Prereqs + Join):** 
+  ```bash
+  ansible-playbook -i inventory.yml site.yml --limit new-worker-node --tags "prereqs,join_workers"
+  # Or via Makefile:
+  make deploy TAGS="prereqs,join_workers" OPTS="--limit new-worker-node"
+  ```
+
+
+---
 
 ## Role Breakdown
 
 ### `roles/common`
-
 - Disables Swap (required by Kubelet).
-- Installs Container Runtime (e.g., Containerd or Docker).
-- Installs `kubelet`, `kubeadm`, and `kubectl`.
-- Configures necessary kernel modules and sysctl params.
+- Loads kernel modules (`overlay`, `br_netfilter`) and configures sysctl parameters.
+- Installs and configures `containerd` runtime with systemd cgroup driver.
+- Configures Kubernetes APT repository and installs `kubelet`, `kubeadm`, and `kubectl` (configured for version `1.31` by default).
 
 ### `roles/control-plane`
-
-- Runs `kubeadm init` on the primary node.
-- Sets up the `.kube` config directory for the user.
-- Installs the Pod Network Addon (e.g., Calico).
-- Generates the join command for workers.
+- Runs `kubeadm init` on the control plane node.
+- Sets up `.kube/config` for standard user access.
+- Deploys Calico Pod Network Addon.
+- Generates join token and certificate hash for worker nodes.
 
 ### `roles/worker`
+- Fetches join credentials from the control plane node.
+- Executes `kubeadm join` to connect worker nodes to the cluster.
 
-- Retrieves the join token from the control plane.
-- Runs `kubeadm join` to connect the worker to the cluster.
+---
 
 ## Verification
 
-Once the playbook finishes, SSH into your control plane node and run:
+After deployment completes, SSH into your control plane node and verify host status:
 
 ```bash
 kubectl get nodes
 ```
 
-You should see your control plane and worker nodes with a status of `Ready`.
+Expected output: All control plane and worker nodes should report status `Ready`.

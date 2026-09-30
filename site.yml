@@ -4,17 +4,24 @@
   become: true
   roles:
     - common
+  tags:
+    - common
+    - prereqs
 
 - name: Configure Control Plane
   hosts: control_plane
   become: true
   roles:
     - control-plane
-  tags: configure_control_plane
+  tags:
+    - control_plane
+    - configure_control_plane
 
 - name: Configure Worker Nodes
   hosts: workers
   become: true
   roles:
     - worker
-  tags: join_workers
+  tags:
+    - worker
+    - join_workers
