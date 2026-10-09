@@ -29,11 +29,21 @@
     group: "{{ ansible_user }}"
     mode: "0600" # Important for security!
 
-# Apply Cilium CNI manifest
-- name: Apply Cilium manifest from URL
+- name: Install Helm (Required for modern Cilium installation)
+  ansible.builtin.shell: curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+  args:
+    creates: /usr/local/bin/helm
+
+- name: Add Cilium Helm repository
+  ansible.builtin.command: helm repo add cilium https://helm.cilium.io/
+  changed_when: false
+
+- name: Apply Cilium CNI via Helm
   ansible.builtin.command: >
-    kubectl apply -f https://raw.githubusercontent.com/cilium/cilium/v{{ cilium_version }}/install/kubernetes/quick-install.yaml
+    helm upgrade --install cilium cilium/cilium
+    --version {{ cilium_version }}
+    --namespace kube-system
   environment:
     KUBECONFIG: "/home/{{ ansible_user }}/.kube/config"
   register: cilium_apply
-  changed_when: "'created' in cilium_apply.stdout or 'configured' in cilium_apply.stdout"
+  changed_when: "'Release \"cilium\" does not exist' in cilium_apply.stdout"

@@ -17,5 +17,3 @@ all:
           ansible_host: 172.16.167.101
         worker-02:
           ansible_host: 172.16.167.102
-        worker-03:
-          ansible_host: 172.16.167.103
